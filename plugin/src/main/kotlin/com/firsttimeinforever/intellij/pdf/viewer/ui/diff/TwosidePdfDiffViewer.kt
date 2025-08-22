@@ -3,7 +3,6 @@ package com.firsttimeinforever.intellij.pdf.viewer.ui.diff
 import com.intellij.diff.DiffContext
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.holders.PdfEditorHolder
 import com.intellij.diff.tools.util.side.TwosideDiffViewer
 import com.intellij.openapi.progress.ProgressIndicator
 

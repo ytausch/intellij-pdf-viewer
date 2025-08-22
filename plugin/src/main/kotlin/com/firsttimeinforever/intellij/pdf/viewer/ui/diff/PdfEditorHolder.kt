@@ -1,13 +1,15 @@
-package com.intellij.diff.tools.holders
+package com.firsttimeinforever.intellij.pdf.viewer.ui.diff
 
-import com.firsttimeinforever.intellij.pdf.viewer.lang.PdfFileType
-import com.firsttimeinforever.intellij.pdf.viewer.ui.editor.PdfFileEditor
 import com.firsttimeinforever.intellij.pdf.viewer.ui.editor.PdfFileEditorProvider
+import com.firsttimeinforever.intellij.pdf.viewer.utility.getVirtualFile
+import com.firsttimeinforever.intellij.pdf.viewer.utility.isPdfBinary
 import com.intellij.diff.DiffContext
 import com.intellij.diff.contents.DiffContent
-import com.intellij.diff.contents.FileContent
+import com.intellij.diff.tools.holders.EditorHolder
+import com.intellij.diff.tools.holders.EditorHolderFactory
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import java.awt.event.FocusListener
 import javax.swing.JComponent
@@ -16,9 +18,6 @@ class PdfEditorHolder(
   private val myEditor: FileEditor,
   private val myEditorProvider: FileEditorProvider?
 ) : EditorHolder() {
-
-  val editor: FileEditor
-    get() = myEditor
 
   override fun dispose() {
     if (myEditorProvider != null) {
@@ -42,19 +41,25 @@ class PdfEditorHolder(
     }
 
     override fun create(content: DiffContent, context: DiffContext): PdfEditorHolder {
-      val project = context.project ?: error("Project required")
-      if (content !is FileContent || content.file.fileType !is PdfFileType) {
-        error("Content must be a FileContent with a PDF file type")
+      val project = context.project ?: ProjectManager.getInstance().defaultProject
+      if (!content.isPdfBinary(project)) {
+        error("Content must be a PDF binary")
       }
-      val editor = PdfFileEditor(project, content.file)
       val provider = PdfFileEditorProvider()
+      val editor = provider.createEditor(
+        project,
+        content.getVirtualFile(project) ?: error("Content must have a virtual file")
+      )
+
+      Disposer.register(editor) {
+        provider.disposeEditor(editor)
+      }
+
       return PdfEditorHolder(editor, provider)
     }
 
-    override fun canShowContent(content: DiffContent, context: DiffContext): Boolean =
-      content is FileContent && content.file.fileType is PdfFileType
+    override fun canShowContent(content: DiffContent, context: DiffContext): Boolean = content.isPdfBinary(context.project ?: ProjectManager.getInstance().defaultProject)
 
-    override fun wantShowContent(content: DiffContent, context: DiffContext): Boolean = canShowContent(content, context)
+    override fun wantShowContent(content: DiffContent, context: DiffContext): Boolean = true
   }
-
 }
